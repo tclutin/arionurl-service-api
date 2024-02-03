@@ -8,8 +8,10 @@ import (
 )
 
 type Config struct {
-	Env        string `yaml:"env"`
-	HTTPServer `yaml:"http_server"`
+	Env          string `yaml:"env"`
+	BaseRedirect string `yaml:"base_redirect"`
+	SizeShortUrl int64  `yaml:"size_short_url"`
+	HTTPServer   `yaml:"http_server"`
 }
 
 type HTTPServer struct {

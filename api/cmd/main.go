@@ -14,6 +14,7 @@ import (
 )
 
 func main() {
+
 	//Initializing the config
 	cfg := config.MustLoad()
 
@@ -21,7 +22,7 @@ func main() {
 	logger := logging.InitSlog(cfg.Env)
 
 	//Initializing the pgxpool
-	pgxPool := postgresql.NewClient(context.Background(), os.Getenv("ARIONURL_DB"))
+	pgxPool := postgresql.NewClient(context.TODO(), os.Getenv("ARIONURL_DB"))
 
 	//Initializing the router
 	router := gin.Default()
@@ -30,8 +31,8 @@ func main() {
 	shortenerRepo := repository.NewShortenerRepo(logger, pgxPool)
 	shortenerRepo.InitDB()
 
-	shortenerService := shortener.NewService(logger, shortenerRepo)
-	shortenerHandler := controller.NewHandler(logger, shortenerService)
+	shortenerService := shortener.NewService(logger, cfg, shortenerRepo)
+	shortenerHandler := controller.NewHandler(logger, cfg, shortenerService)
 
 	shortenerHandler.Register(router)
 	app.New(cfg, logger, router).Run()

@@ -2,3 +2,5 @@ env: "production"
 http_server:
   address: "localhost:8080"
   timeout: 2s
+base_redirect: "http://google.com"
+size_short_url: 6

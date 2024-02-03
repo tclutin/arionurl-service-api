@@ -2,6 +2,7 @@ package shortener
 
 import (
 	"errors"
+	"github.com/tclutin/ArionURL/internal/config"
 	"github.com/tclutin/ArionURL/pkg/utils"
 	"log/slog"
 	"net/url"
@@ -18,11 +19,12 @@ type Repository interface {
 
 type service struct {
 	logger *slog.Logger
+	cfg    *config.Config
 	repo   Repository
 }
 
-func NewService(logger *slog.Logger, repo Repository) *service {
-	return &service{logger: logger, repo: repo}
+func NewService(logger *slog.Logger, cfg *config.Config, repo Repository) *service {
+	return &service{logger: logger, cfg: cfg, repo: repo}
 }
 
 func (s *service) CreateShortUrl(dto CreateUrlDTO) (string, error) {
@@ -54,7 +56,7 @@ func (s *service) CreateShortUrl(dto CreateUrlDTO) (string, error) {
 	}
 
 	url := URL{
-		AliasURL:    s.generateAlias(6),
+		AliasURL:    s.generateAlias(s.cfg.SizeShortUrl),
 		OriginalURL: dto.OriginalURL,
 		Options:     options,
 		CreatedAt:   currentTime,

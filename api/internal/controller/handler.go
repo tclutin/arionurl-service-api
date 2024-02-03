@@ -2,6 +2,7 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/tclutin/ArionURL/internal/config"
 	"github.com/tclutin/ArionURL/internal/domain/shortener"
 	"log/slog"
 	"net/http"
@@ -18,12 +19,13 @@ type ShortenerService interface {
 }
 
 type handler struct {
+	cfg     *config.Config
 	logger  *slog.Logger
 	service ShortenerService
 }
 
-func NewHandler(logger *slog.Logger, service ShortenerService) *handler {
-	return &handler{logger: logger, service: service}
+func NewHandler(logger *slog.Logger, cfg *config.Config, service ShortenerService) *handler {
+	return &handler{logger: logger, cfg: cfg, service: service}
 }
 
 func (h *handler) Register(router *gin.Engine) {
@@ -52,7 +54,7 @@ func (h *handler) RedirectToAlias(c *gin.Context) {
 	url, err := h.service.LookShortUrl(alias)
 
 	if err != nil {
-		c.Redirect(http.StatusFound, "http://google.com")
+		c.Redirect(http.StatusFound, h.cfg.BaseRedirect)
 		return
 	}
 	c.Redirect(http.StatusFound, url.OriginalURL)

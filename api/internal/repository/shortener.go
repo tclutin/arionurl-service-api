@@ -59,7 +59,6 @@ func (s *shortenerRepository) UpdateShortUrl(entity shortener.URL) error {
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -70,7 +69,6 @@ func (s *shortenerRepository) RemoveUrlByID(id uint64) error {
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -84,7 +82,6 @@ func (s *shortenerRepository) GetUrlByAlias(alias string) (shortener.URL, error)
 	if err := row.Scan(&url.ID, &url.UserID, &url.AliasURL, &url.OriginalURL, &url.Options.Visits, &url.Options.CountUse, &url.Options.Duration, &url.CreatedAt); err != nil {
 		return url, err
 	}
-
 	return url, nil
 }
 
@@ -100,6 +97,5 @@ func (s *shortenerRepository) CreateAlias(model shortener.URL) (string, error) {
 	if err := row.Scan(&alias); err != nil {
 		log.Fatalln(err)
 	}
-
 	return alias, nil
 }
