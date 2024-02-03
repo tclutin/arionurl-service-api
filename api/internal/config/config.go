@@ -8,6 +8,7 @@ import (
 )
 
 type Config struct {
+	Env        string `yaml:"env"`
 	HTTPServer `yaml:"http_server"`
 }
 
