@@ -6,7 +6,7 @@ import (
 )
 
 // Default logger
-func MustLoadSlog(env string) *slog.Logger {
+func InitSlog(env string) *slog.Logger {
 	switch env {
 	case "local":
 		return slog.New(slog.NewTextHandler(os.Stdout, nil))

@@ -16,7 +16,7 @@ func main() {
 	cfg := config.MustLoad()
 
 	//Initializing the logger
-	logger := logging.MustLoadSlog(cfg.Env)
+	logger := logging.InitSlog(cfg.Env)
 
 	//Initial the pgxpool
 	pgxPool := postgresql.NewClient(context.Background(), os.Getenv("ARIONURL_DB"))
