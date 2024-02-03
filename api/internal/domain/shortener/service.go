@@ -9,7 +9,7 @@ import (
 )
 
 type Repository interface {
-	CreateAlias(dto CreateUrlDTO) (string, error)
+	CreateAlias(model URL) (string, error)
 	GetByAlias(alias string) (*URL, error)
 }
 
@@ -36,7 +36,26 @@ func (s *service) CreateURL(dto CreateUrlDTO) (string, error) {
 		return "", errors.New("count of hours >= 720h")
 	}
 
-	return s.generateAlias(6), nil
+	currentTime := time.Now()
+	expirationTime := currentTime.Add(duration)
+
+	options := URLOptions{
+		Duration: expirationTime,
+	}
+
+	url := URL{
+		AliasURL:    s.generateAlias(6),
+		OriginalURL: dto.OriginalURL,
+		Options:     options,
+		CreatedAt:   time.Now(),
+	}
+
+	alias, err := s.repo.CreateAlias(url)
+	if err != nil {
+		return "", errors.New("alias creation error")
+	}
+
+	return alias, nil
 }
 
 func (s *service) GetURLByAlias(alias string) (*URL, error) {

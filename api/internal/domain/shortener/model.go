@@ -12,7 +12,7 @@ type URL struct {
 }
 
 type URLOptions struct {
-	Visits   int           `json:"visits"`
-	CountUse int           `json:"count_use"`
-	Duration time.Duration `json:"duration"`
+	Visits   int       `json:"visits"`
+	CountUse int       `json:"count_use"`
+	Duration time.Time `json:"duration"`
 }
