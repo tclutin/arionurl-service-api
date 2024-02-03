@@ -13,6 +13,5 @@ func InitSlog(env string) *slog.Logger {
 	case "production":
 		return slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	}
-
 	return nil
 }
