@@ -16,6 +16,9 @@ type HTTPServer struct {
 	Timeout time.Duration `yaml:"timeout" env-default:"2s"`
 }
 
+type DBConfig struct {
+}
+
 func MustLoad() *Config {
 	var config Config
 
