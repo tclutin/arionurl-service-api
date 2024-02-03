@@ -13,6 +13,16 @@ type shortenerRepository struct {
 	logger *slog.Logger
 }
 
+func (s *shortenerRepository) RemoveShortUrl(alias string) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (s *shortenerRepository) UpdateShortUrl(dto shortener.URL) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func NewShortenerRepo(logger *slog.Logger, client postgresql.Client) *shortenerRepository {
 	return &shortenerRepository{
 		logger: logger,
@@ -51,9 +61,18 @@ func (s *shortenerRepository) InitDB() {
 	}
 }
 
-func (s *shortenerRepository) GetByAlias(alias string) (*shortener.URL, error) {
-	//TODO implement me
-	panic("implement me")
+func (s *shortenerRepository) GetUrlByAlias(alias string) (shortener.URL, error) {
+	sql := `SELECT * FROM urls WHERE alias_url = $1`
+
+	row := s.client.QueryRow(context.Background(), sql, alias)
+
+	var url shortener.URL
+
+	if err := row.Scan(&url.ID, &url.UserID, &url.AliasURL, &url.OriginalURL, &url.Options.Visits, &url.Options.CountUse, &url.Options.Duration, &url.CreatedAt); err != nil {
+		return url, err
+	}
+
+	return url, nil
 }
 
 func (s *shortenerRepository) CreateAlias(model shortener.URL) (string, error) {
@@ -65,9 +84,9 @@ func (s *shortenerRepository) CreateAlias(model shortener.URL) (string, error) {
 
 	var alias string
 
-	err := row.Scan(&alias)
-	if err != nil {
+	if err := row.Scan(&alias); err != nil {
 		log.Fatalln(err)
 	}
+
 	return alias, nil
 }

@@ -5,12 +5,15 @@ import (
 	"github.com/tclutin/ArionURL/pkg/utils"
 	"log/slog"
 	"net/url"
+	"strings"
 	"time"
 )
 
 type Repository interface {
 	CreateAlias(model URL) (string, error)
-	GetByAlias(alias string) (*URL, error)
+	GetUrlByAlias(alias string) (URL, error)
+	RemoveShortUrl(alias string) error
+	UpdateShortUrl(model URL)
 }
 
 type service struct {
@@ -22,10 +25,12 @@ func NewService(logger *slog.Logger, repo Repository) *service {
 	return &service{logger: logger, repo: repo}
 }
 
-func (s *service) CreateURL(dto CreateUrlDTO) (string, error) {
+func (s *service) CreateShortUrl(dto CreateUrlDTO) (string, error) {
 	if !s.validateOriginalURL(dto.OriginalURL) {
 		return "", errors.New("invalid format of the original url")
 	}
+
+	dto.Duration = strings.ReplaceAll(dto.Duration, "-", "")
 
 	duration, err := time.ParseDuration(dto.Duration)
 	if err != nil {
@@ -36,18 +41,19 @@ func (s *service) CreateURL(dto CreateUrlDTO) (string, error) {
 		return "", errors.New("count of hours >= 720h")
 	}
 
-	currentTime := time.Now()
+	currentTime := time.Now().UTC()
 	expirationTime := currentTime.Add(duration)
 
 	options := URLOptions{
 		Duration: expirationTime,
+		CountUse: dto.CountUse,
 	}
 
 	url := URL{
 		AliasURL:    s.generateAlias(6),
 		OriginalURL: dto.OriginalURL,
 		Options:     options,
-		CreatedAt:   time.Now(),
+		CreatedAt:   currentTime,
 	}
 
 	alias, err := s.repo.CreateAlias(url)
@@ -58,8 +64,17 @@ func (s *service) CreateURL(dto CreateUrlDTO) (string, error) {
 	return alias, nil
 }
 
-func (s *service) GetURLByAlias(alias string) (*URL, error) {
-	return nil, nil
+func (s *service) LookShortUrl(alias string) (URL, error) {
+	url, err := s.repo.GetUrlByAlias(alias)
+	if err != nil {
+		return URL{}, errors.New("alias not found")
+	}
+
+	if url.Options.Duration.Before(time.Now()) {
+		return URL{}, errors.New("URL expired")
+	}
+
+	return url, nil
 }
 
 func (s *service) validateDuration(duration time.Duration) bool {

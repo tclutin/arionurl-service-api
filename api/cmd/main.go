@@ -29,6 +29,7 @@ func main() {
 	//Initializing the shortener service
 	shortenerRepo := repository.NewShortenerRepo(logger, pgxPool)
 	shortenerRepo.InitDB()
+
 	shortenerService := shortener.NewService(logger, shortenerRepo)
 	shortenerHandler := controller.NewHandler(logger, shortenerService)
 

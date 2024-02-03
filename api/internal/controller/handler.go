@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/tclutin/ArionURL/internal/domain/shortener"
 	"log/slog"
@@ -13,8 +14,8 @@ const (
 )
 
 type ShortenerService interface {
-	CreateURL(dto shortener.CreateUrlDTO) (string, error)
-	GetURLByAlias(alias string) (*shortener.URL, error)
+	CreateShortUrl(dto shortener.CreateUrlDTO) (string, error)
+	LookShortUrl(alias string) (shortener.URL, error)
 }
 
 type handler struct {
@@ -38,7 +39,7 @@ func (h *handler) CreateAlias(c *gin.Context) {
 		return
 	}
 
-	shortUrl, err := h.service.CreateURL(dto)
+	shortUrl, err := h.service.CreateShortUrl(dto)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -49,11 +50,13 @@ func (h *handler) CreateAlias(c *gin.Context) {
 
 func (h *handler) RedirectToAlias(c *gin.Context) {
 	alias := c.Param("alias")
-	url, err := h.service.GetURLByAlias(alias)
+	url, err := h.service.LookShortUrl(alias)
+
 	if err != nil {
-		c.Redirect(http.StatusOK, "https://www.google.com/")
+		fmt.Println("Истёкла тёкла")
+		c.Redirect(http.StatusFound, "http://google.com")
 		return
 	}
-	c.Redirect(http.StatusOK, url.OriginalURL)
+	c.Redirect(http.StatusFound, url.OriginalURL)
 	return
 }

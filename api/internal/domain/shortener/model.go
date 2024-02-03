@@ -1,10 +1,12 @@
 package shortener
 
-import "time"
+import (
+	"time"
+)
 
 type URL struct {
 	ID          uint64     `json:"id"`
-	UserID      uint64     `json:"user_id"`
+	UserID      *uint64    `json:"user_id"`
 	AliasURL    string     `json:"alias_url"`
 	OriginalURL string     `json:"original_url"`
 	Options     URLOptions `json:"options"`
@@ -12,7 +14,7 @@ type URL struct {
 }
 
 type URLOptions struct {
-	Visits   int       `json:"visits"`
-	CountUse int       `json:"count_use"`
+	Visits   uint      `json:"visits"`
+	CountUse uint      `json:"count_use"`
 	Duration time.Time `json:"duration"`
 }
