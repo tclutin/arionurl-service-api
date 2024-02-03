@@ -2,6 +2,7 @@ package shortener
 
 import (
 	"errors"
+	"github.com/tclutin/ArionURL/pkg/utils"
 	"log/slog"
 	"net/url"
 	"time"
@@ -34,7 +35,8 @@ func (s *service) CreateURL(dto CreateUrlDTO) (string, error) {
 	if !s.validateDuration(duration) {
 		return "", errors.New("count of hours >= 720h")
 	}
-	return "", nil
+
+	return s.generateAlias(6), nil
 }
 
 func (s *service) GetURLByAlias(alias string) (*URL, error) {
@@ -49,10 +51,19 @@ func (s *service) validateDuration(duration time.Duration) bool {
 	return false
 }
 
-func (s *service) validateOriginalURL(original string) bool {
-	_, err := url.ParseRequestURI(original)
+func (s *service) validateOriginalURL(originalURL string) bool {
+	_, err := url.ParseRequestURI(originalURL)
 	if err != nil {
 		return false
 	}
 	return true
+}
+
+func (s *service) generateAlias(size int64) string {
+	chars := []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
+	alias := make([]rune, size)
+	for i := range alias {
+		alias[i] = chars[utils.NewCryptoRand(int64(len(chars)))]
+	}
+	return string(alias)
 }
