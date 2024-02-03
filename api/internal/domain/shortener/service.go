@@ -12,8 +12,8 @@ import (
 type Repository interface {
 	CreateAlias(model URL) (string, error)
 	GetUrlByAlias(alias string) (URL, error)
-	RemoveShortUrl(alias string) error
-	UpdateShortUrl(model URL)
+	RemoveUrlByID(id uint64) error
+	UpdateShortUrl(model URL) error
 }
 
 type service struct {
@@ -71,7 +71,14 @@ func (s *service) LookShortUrl(alias string) (URL, error) {
 	}
 
 	if url.Options.Duration.Before(time.Now()) {
-		return URL{}, errors.New("URL expired")
+		return URL{}, errors.New("url expired")
+	}
+
+	url.Options.Visits++
+
+	err = s.repo.UpdateShortUrl(url)
+	if err != nil {
+		return URL{}, errors.New("failed to update short url")
 	}
 
 	return url, nil

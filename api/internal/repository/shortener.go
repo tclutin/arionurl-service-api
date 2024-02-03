@@ -13,16 +13,6 @@ type shortenerRepository struct {
 	logger *slog.Logger
 }
 
-func (s *shortenerRepository) RemoveShortUrl(alias string) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (s *shortenerRepository) UpdateShortUrl(dto shortener.URL) {
-	//TODO implement me
-	panic("implement me")
-}
-
 func NewShortenerRepo(logger *slog.Logger, client postgresql.Client) *shortenerRepository {
 	return &shortenerRepository{
 		logger: logger,
@@ -59,6 +49,23 @@ func (s *shortenerRepository) InitDB() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+}
+
+func (s *shortenerRepository) UpdateShortUrl(entity shortener.URL) error {
+	sql := `UPDATE urls SET visits = $1, count_use = $2`
+
+	_, err := s.client.Exec(context.Background(), sql, entity.Options.Visits, entity.Options.CountUse)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *shortenerRepository) RemoveShortUrl(alias string) error {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (s *shortenerRepository) GetUrlByAlias(alias string) (shortener.URL, error) {
