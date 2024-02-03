@@ -52,9 +52,9 @@ func (s *shortenerRepository) InitDB() {
 }
 
 func (s *shortenerRepository) UpdateShortUrl(entity shortener.URL) error {
-	sql := `UPDATE urls SET visits = $1, count_use = $2`
+	sql := `UPDATE urls SET visits = $1, count_use = $2 WHERE id =  $3`
 
-	_, err := s.client.Exec(context.Background(), sql, entity.Options.Visits, entity.Options.CountUse)
+	_, err := s.client.Exec(context.Background(), sql, entity.Options.Visits, entity.Options.CountUse, entity.ID)
 
 	if err != nil {
 		return err

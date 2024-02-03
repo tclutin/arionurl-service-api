@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/tclutin/ArionURL/internal/domain/shortener"
 	"log/slog"
@@ -53,7 +52,6 @@ func (h *handler) RedirectToAlias(c *gin.Context) {
 	url, err := h.service.LookShortUrl(alias)
 
 	if err != nil {
-		fmt.Println("Истёкла тёкла")
 		c.Redirect(http.StatusFound, "http://google.com")
 		return
 	}

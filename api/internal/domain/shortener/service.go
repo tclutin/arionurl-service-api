@@ -26,11 +26,11 @@ func NewService(logger *slog.Logger, repo Repository) *service {
 }
 
 func (s *service) CreateShortUrl(dto CreateUrlDTO) (string, error) {
+	dto.Duration = strings.ReplaceAll(dto.Duration, "-", "")
+
 	if !s.validateOriginalURL(dto.OriginalURL) {
 		return "", errors.New("invalid format of the original url")
 	}
-
-	dto.Duration = strings.ReplaceAll(dto.Duration, "-", "")
 
 	duration, err := time.ParseDuration(dto.Duration)
 	if err != nil {
@@ -39,6 +39,10 @@ func (s *service) CreateShortUrl(dto CreateUrlDTO) (string, error) {
 
 	if !s.validateDuration(duration) {
 		return "", errors.New("count of hours >= 720h")
+	}
+
+	if dto.CountUse <= 0 {
+		dto.CountUse = -1
 	}
 
 	currentTime := time.Now().UTC()
@@ -71,10 +75,28 @@ func (s *service) LookShortUrl(alias string) (URL, error) {
 	}
 
 	if url.Options.Duration.Before(time.Now()) {
+
+		err = s.repo.RemoveUrlByID(url.ID)
+		if err != nil {
+			return URL{}, errors.New("deletion error")
+		}
+
 		return URL{}, errors.New("url expired")
 	}
 
 	url.Options.Visits++
+
+	if url.Options.CountUse > 0 {
+		url.Options.CountUse--
+	}
+
+	if url.Options.CountUse == 0 {
+		err = s.repo.RemoveUrlByID(url.ID)
+		if err != nil {
+			return URL{}, errors.New("deletion error")
+		}
+		return URL{}, errors.New("count is poor")
+	}
 
 	err = s.repo.UpdateShortUrl(url)
 	if err != nil {
