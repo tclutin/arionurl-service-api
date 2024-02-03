@@ -63,9 +63,15 @@ func (s *shortenerRepository) UpdateShortUrl(entity shortener.URL) error {
 	return nil
 }
 
-func (s *shortenerRepository) RemoveShortUrl(alias string) error {
-	//TODO implement me
-	panic("implement me")
+func (s *shortenerRepository) RemoveUrlByID(id uint64) error {
+	sql := `DELETE FROM urls WHERE id = $1`
+	_, err := s.client.Exec(context.Background(), sql, id)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *shortenerRepository) GetUrlByAlias(alias string) (shortener.URL, error) {
