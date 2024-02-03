@@ -32,6 +32,7 @@ func (a *app) Run() {
 func (a *app) startHTTP() {
 	a.logger.Info("start HTTP server", slog.String("address", a.cfg.Address))
 	a.httpServer = &http.Server{
+		Addr:         a.cfg.Address,
 		Handler:      a.router,
 		WriteTimeout: a.cfg.Timeout,
 		ReadTimeout:  a.cfg.Timeout,
