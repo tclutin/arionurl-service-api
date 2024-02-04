@@ -27,13 +27,6 @@ func NewShortenerRepository(logger *slog.Logger, client postgresql.Client) *shor
 }
 
 func (s *shortenerRepository) InitDB() {
-	users := `CREATE TABLE IF NOT EXISTS public.users (
-    		id SERIAL PRIMARY KEY,
-    		username TEXT NOT NULL,
-    		telegram_id TEXT,
-    		created_at TIMESTAMP NOT NULL 	
-		)`
-
 	urls := `CREATE TABLE IF NOT EXISTS public.urls (
     		id SERIAL PRIMARY KEY,
     		user_id INTEGER,
@@ -46,12 +39,7 @@ func (s *shortenerRepository) InitDB() {
     	    FOREIGN KEY (user_id) REFERENCES public.users(id)
 			)`
 
-	_, err := s.client.Exec(context.Background(), users)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	_, err = s.client.Exec(context.Background(), urls)
+	_, err := s.client.Exec(context.Background(), urls)
 	if err != nil {
 		log.Fatalln(err)
 	}
