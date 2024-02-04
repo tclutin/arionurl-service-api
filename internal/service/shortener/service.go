@@ -15,6 +15,7 @@ const (
 	layer = "shortenerService."
 )
 
+//go:generate go run github.com/vektra/mockery/v2@v2.40.1 --name=Repository
 type Repository interface {
 	CreateAlias(ctx context.Context, model *URL) (string, error)
 	GetUrlByAlias(ctx context.Context, alias string) (*URL, error)
@@ -53,6 +54,7 @@ func (s *service) LookShortUrl(ctx context.Context, alias string) (*URL, error) 
 	url.Options.Visits++
 
 	if url.Options.CountUse == 0 {
+
 		err = s.repo.RemoveUrlByID(ctx, url.ID)
 		if err != nil {
 			return nil, errors.New("deletion error")

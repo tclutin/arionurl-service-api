@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/tclutin/ArionURL/internal/config"
+	"github.com/tclutin/ArionURL/internal/controller/middleware"
 	"github.com/tclutin/ArionURL/internal/service/shortener"
 	"log/slog"
 	"net/http"
@@ -32,11 +33,12 @@ func NewHandler(logger *slog.Logger, cfg *config.Config, service ShortenerServic
 }
 
 func (h *handler) Register(router *gin.Engine) {
-	router.POST(createAliasURL, h.CreateAlias)
-	router.GET(redirectToAliasURL, h.RedirectToAlias)
+	router.Use(middleware.RateLimiter())
+	router.POST(createAliasURL, h.createAlias)
+	router.GET(redirectToAliasURL, h.redirectToAlias)
 }
 
-func (h *handler) CreateAlias(c *gin.Context) {
+func (h *handler) createAlias(c *gin.Context) {
 	h.logger.Info(layer + "CreateAlias")
 	var dto shortener.CreateUrlDTO
 	if err := c.BindJSON(&dto); err != nil {
@@ -53,7 +55,7 @@ func (h *handler) CreateAlias(c *gin.Context) {
 	return
 }
 
-func (h *handler) RedirectToAlias(c *gin.Context) {
+func (h *handler) redirectToAlias(c *gin.Context) {
 	h.logger.Info(layer + "RedirectToAlias")
 	alias := c.Param("alias")
 	url, err := h.service.LookShortUrl(context.Background(), alias)
