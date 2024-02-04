@@ -34,6 +34,7 @@ func NewService(logger *slog.Logger, cfg *config.Config, repo Repository) *servi
 }
 
 func (s *service) LookShortUrl(ctx context.Context, alias string) (*URL, error) {
+	s.logger.Info(layer + "LookShortUrl")
 	url, err := s.repo.GetUrlByAlias(ctx, alias)
 	if err != nil {
 		return nil, errors.New("alias not found")
@@ -72,6 +73,7 @@ func (s *service) LookShortUrl(ctx context.Context, alias string) (*URL, error) 
 }
 
 func (s *service) CreateShortUrl(ctx context.Context, dto CreateUrlDTO) (string, error) {
+	s.logger.Info(layer + "CreateShortUrl")
 	dto.Duration = strings.ReplaceAll(dto.Duration, "-", "")
 
 	if !s.validateOriginalURL(dto.OriginalURL) {
@@ -115,6 +117,7 @@ func (s *service) CreateShortUrl(ctx context.Context, dto CreateUrlDTO) (string,
 }
 
 func (s *service) validateDuration(duration time.Duration) bool {
+	s.logger.Info(layer + "validateDuration")
 	maxDuration := 720 * time.Hour
 	if duration < maxDuration {
 		return true
@@ -123,6 +126,7 @@ func (s *service) validateDuration(duration time.Duration) bool {
 }
 
 func (s *service) validateOriginalURL(originalURL string) bool {
+	s.logger.Info(layer + "validateOriginalURL")
 	_, err := url.ParseRequestURI(originalURL)
 	if err != nil {
 		return false
@@ -131,6 +135,7 @@ func (s *service) validateOriginalURL(originalURL string) bool {
 }
 
 func (s *service) generateAlias(size int64) string {
+	s.logger.Info(layer + "generateAlias")
 	chars := []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
 	alias := make([]rune, size)
 	for i := range alias {

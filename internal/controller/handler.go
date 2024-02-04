@@ -37,6 +37,7 @@ func (h *handler) Register(router *gin.Engine) {
 }
 
 func (h *handler) CreateAlias(c *gin.Context) {
+	h.logger.Info(layer + "CreateAlias")
 	var dto shortener.CreateUrlDTO
 	if err := c.BindJSON(&dto); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -53,6 +54,7 @@ func (h *handler) CreateAlias(c *gin.Context) {
 }
 
 func (h *handler) RedirectToAlias(c *gin.Context) {
+	h.logger.Info(layer + "RedirectToAlias")
 	alias := c.Param("alias")
 	url, err := h.service.LookShortUrl(context.Background(), alias)
 
