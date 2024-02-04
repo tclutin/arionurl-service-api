@@ -10,6 +10,7 @@ import (
 )
 
 const (
+	layer              = "shortenerHandler."
 	createAliasURL     = "/aliases"
 	redirectToAliasURL = "/:alias"
 )
@@ -26,6 +27,7 @@ type handler struct {
 }
 
 func NewHandler(logger *slog.Logger, cfg *config.Config, service ShortenerService) *handler {
+	logger.Info(layer + "init")
 	return &handler{logger: logger, cfg: cfg, service: service}
 }
 

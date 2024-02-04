@@ -11,6 +11,10 @@ import (
 	"time"
 )
 
+const (
+	layer = "shortenerService."
+)
+
 type Repository interface {
 	CreateAlias(ctx context.Context, model *URL) (string, error)
 	GetUrlByAlias(ctx context.Context, alias string) (*URL, error)
@@ -25,6 +29,7 @@ type service struct {
 }
 
 func NewService(logger *slog.Logger, cfg *config.Config, repo Repository) *service {
+	logger.Info(layer + "init")
 	return &service{logger: logger, cfg: cfg, repo: repo}
 }
 

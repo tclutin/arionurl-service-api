@@ -19,6 +19,7 @@ type shortenerRepository struct {
 }
 
 func NewShortenerRepository(logger *slog.Logger, client postgresql.Client) *shortenerRepository {
+	logger.Info(layer + "init")
 	return &shortenerRepository{
 		logger: logger,
 		client: client,
