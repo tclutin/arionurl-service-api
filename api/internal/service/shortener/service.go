@@ -11,10 +11,10 @@ import (
 )
 
 type Repository interface {
-	CreateAlias(model URL) (string, error)
-	GetUrlByAlias(alias string) (URL, error)
+	CreateAlias(model *URL) (string, error)
+	GetUrlByAlias(alias string) (*URL, error)
 	RemoveUrlByID(id uint64) error
-	UpdateShortUrl(model URL) error
+	UpdateShortUrl(model *URL) error
 }
 
 type service struct {
@@ -55,7 +55,7 @@ func (s *service) CreateShortUrl(dto CreateUrlDTO) (string, error) {
 		CountUse: dto.CountUse,
 	}
 
-	url := URL{
+	url := &URL{
 		AliasURL:    s.generateAlias(s.cfg.SizeShortUrl),
 		OriginalURL: dto.OriginalURL,
 		Options:     options,
@@ -70,39 +70,39 @@ func (s *service) CreateShortUrl(dto CreateUrlDTO) (string, error) {
 	return alias, nil
 }
 
-func (s *service) LookShortUrl(alias string) (URL, error) {
+func (s *service) LookShortUrl(alias string) (*URL, error) {
 	url, err := s.repo.GetUrlByAlias(alias)
 	if err != nil {
-		return URL{}, errors.New("alias not found")
+		return nil, errors.New("alias not found")
 	}
 
 	if url.Options.Duration.Before(time.Now()) {
 
 		err = s.repo.RemoveUrlByID(url.ID)
 		if err != nil {
-			return URL{}, errors.New("deletion error")
+			return nil, errors.New("deletion error")
 		}
 
-		return URL{}, errors.New("url expired")
+		return nil, errors.New("url expired")
 	}
 
 	url.Options.Visits++
+
+	if url.Options.CountUse == 0 {
+		err = s.repo.RemoveUrlByID(url.ID)
+		if err != nil {
+			return nil, errors.New("deletion error")
+		}
+		return nil, errors.New("count is poor")
+	}
 
 	if url.Options.CountUse > 0 {
 		url.Options.CountUse--
 	}
 
-	if url.Options.CountUse == 0 {
-		err = s.repo.RemoveUrlByID(url.ID)
-		if err != nil {
-			return URL{}, errors.New("deletion error")
-		}
-		return URL{}, errors.New("count is poor")
-	}
-
 	err = s.repo.UpdateShortUrl(url)
 	if err != nil {
-		return URL{}, errors.New("failed to update short url")
+		return nil, errors.New("failed to update short url")
 	}
 
 	return url, nil

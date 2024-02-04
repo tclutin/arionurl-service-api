@@ -1,8 +1,8 @@
-package repository
+package postgres
 
 import (
 	"context"
-	"github.com/tclutin/ArionURL/internal/domain/shortener"
+	"github.com/tclutin/ArionURL/internal/service/shortener"
 	"github.com/tclutin/ArionURL/pkg/client/postgresql"
 	"log"
 	"log/slog"
@@ -51,7 +51,7 @@ func (s *shortenerRepository) InitDB() {
 	}
 }
 
-func (s *shortenerRepository) UpdateShortUrl(entity shortener.URL) error {
+func (s *shortenerRepository) UpdateShortUrl(entity *shortener.URL) error {
 	sql := `UPDATE urls SET visits = $1, count_use = $2 WHERE id =  $3`
 
 	_, err := s.client.Exec(context.Background(), sql, entity.Options.Visits, entity.Options.CountUse, entity.ID)
@@ -72,7 +72,7 @@ func (s *shortenerRepository) RemoveUrlByID(id uint64) error {
 	return nil
 }
 
-func (s *shortenerRepository) GetUrlByAlias(alias string) (shortener.URL, error) {
+func (s *shortenerRepository) GetUrlByAlias(alias string) (*shortener.URL, error) {
 	sql := `SELECT * FROM urls WHERE alias_url = $1`
 
 	row := s.client.QueryRow(context.Background(), sql, alias)
@@ -80,12 +80,12 @@ func (s *shortenerRepository) GetUrlByAlias(alias string) (shortener.URL, error)
 	var url shortener.URL
 
 	if err := row.Scan(&url.ID, &url.UserID, &url.AliasURL, &url.OriginalURL, &url.Options.Visits, &url.Options.CountUse, &url.Options.Duration, &url.CreatedAt); err != nil {
-		return url, err
+		return nil, err
 	}
-	return url, nil
+	return &url, nil
 }
 
-func (s *shortenerRepository) CreateAlias(model shortener.URL) (string, error) {
+func (s *shortenerRepository) CreateAlias(model *shortener.URL) (string, error) {
 	sql := `INSERT INTO urls (alias_url, original_url, visits, count_use, duration, created_at)
 			VALUES ($1, $2, $3, $4, $5, $6)
 			RETURNING alias_url`

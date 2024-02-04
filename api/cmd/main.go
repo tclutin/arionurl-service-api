@@ -2,19 +2,22 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/tclutin/ArionURL/internal/app"
 	"github.com/tclutin/ArionURL/internal/config"
 	"github.com/tclutin/ArionURL/internal/controller"
-	"github.com/tclutin/ArionURL/internal/domain/shortener"
-	"github.com/tclutin/ArionURL/internal/repository"
+	"github.com/tclutin/ArionURL/internal/repository/postgres"
+	"github.com/tclutin/ArionURL/internal/service/shortener"
 	"github.com/tclutin/ArionURL/pkg/client/postgresql"
 	"github.com/tclutin/ArionURL/pkg/logging"
+	"net/url"
 	"os"
+	"unsafe"
 )
 
 func main() {
-
+	fmt.Println(unsafe.Sizeof(url.URL{}))
 	//Initializing the config
 	cfg := config.MustLoad()
 
@@ -28,7 +31,7 @@ func main() {
 	router := gin.Default()
 
 	//Initializing the shortener service
-	shortenerRepo := repository.NewShortenerRepo(logger, pgxPool)
+	shortenerRepo := postgres.NewShortenerRepo(logger, pgxPool)
 	shortenerRepo.InitDB()
 
 	shortenerService := shortener.NewService(logger, cfg, shortenerRepo)

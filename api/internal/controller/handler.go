@@ -3,7 +3,7 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/tclutin/ArionURL/internal/config"
-	"github.com/tclutin/ArionURL/internal/domain/shortener"
+	"github.com/tclutin/ArionURL/internal/service/shortener"
 	"log/slog"
 	"net/http"
 )
@@ -15,7 +15,7 @@ const (
 
 type ShortenerService interface {
 	CreateShortUrl(dto shortener.CreateUrlDTO) (string, error)
-	LookShortUrl(alias string) (shortener.URL, error)
+	LookShortUrl(alias string) (*shortener.URL, error)
 }
 
 type handler struct {
