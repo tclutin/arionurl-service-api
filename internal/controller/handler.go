@@ -53,8 +53,8 @@ func (h *handler) createAlias(c *gin.Context) {
 		return
 	}
 
-	fullUrl := fmt.Sprintf("%s/%s", h.cfg.Address, alias)
-	c.JSON(http.StatusCreated, gin.H{"alias": fullUrl})
+	fullUrl := fmt.Sprintf("http://%s/%s", h.cfg.Address, alias)
+	c.JSON(http.StatusCreated, gin.H{"url": fullUrl})
 	return
 }
 

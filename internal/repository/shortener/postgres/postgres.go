@@ -63,7 +63,7 @@ func (s *shortenerRepository) GetUrlByAlias(ctx context.Context, alias string) (
 
 	var url shortener.URL
 
-	if err := row.Scan(&url.ID, &url.UserID, &url.AliasURL, &url.OriginalURL, &url.Options.Visits, &url.Options.CountUse, &url.Options.Duration, &url.CreatedAt); err != nil {
+	if err := row.Scan(&url.ID, &url.AliasURL, &url.OriginalURL, &url.Options.Visits, &url.Options.CountUse, &url.Options.Duration, &url.CreatedAt); err != nil {
 		s.logger.Info(layer+"GetUrlByAlias", slog.Any("error", err))
 		return nil, err
 	}
