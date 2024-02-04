@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/tclutin/ArionURL/internal/app"
 	"github.com/tclutin/ArionURL/internal/config"
@@ -11,13 +10,10 @@ import (
 	"github.com/tclutin/ArionURL/internal/service/shortener"
 	"github.com/tclutin/ArionURL/pkg/client/postgresql"
 	"github.com/tclutin/ArionURL/pkg/logging"
-	"net/url"
 	"os"
-	"unsafe"
 )
 
 func main() {
-	fmt.Println(unsafe.Sizeof(url.URL{}))
 	//Initializing the config
 	cfg := config.MustLoad()
 

@@ -51,10 +51,10 @@ func (s *shortenerRepository) InitDB() {
 	}
 }
 
-func (s *shortenerRepository) UpdateShortUrl(entity *shortener.URL) error {
+func (s *shortenerRepository) UpdateShortUrl(ctx context.Context, entity *shortener.URL) error {
 	sql := `UPDATE urls SET visits = $1, count_use = $2 WHERE id =  $3`
 
-	_, err := s.client.Exec(context.Background(), sql, entity.Options.Visits, entity.Options.CountUse, entity.ID)
+	_, err := s.client.Exec(ctx, sql, entity.Options.Visits, entity.Options.CountUse, entity.ID)
 
 	if err != nil {
 		return err
@@ -62,9 +62,9 @@ func (s *shortenerRepository) UpdateShortUrl(entity *shortener.URL) error {
 	return nil
 }
 
-func (s *shortenerRepository) RemoveUrlByID(id uint64) error {
+func (s *shortenerRepository) RemoveUrlByID(ctx context.Context, id uint64) error {
 	sql := `DELETE FROM urls WHERE id = $1`
-	_, err := s.client.Exec(context.Background(), sql, id)
+	_, err := s.client.Exec(ctx, sql, id)
 
 	if err != nil {
 		return err
@@ -72,10 +72,10 @@ func (s *shortenerRepository) RemoveUrlByID(id uint64) error {
 	return nil
 }
 
-func (s *shortenerRepository) GetUrlByAlias(alias string) (*shortener.URL, error) {
+func (s *shortenerRepository) GetUrlByAlias(ctx context.Context, alias string) (*shortener.URL, error) {
 	sql := `SELECT * FROM urls WHERE alias_url = $1`
 
-	row := s.client.QueryRow(context.Background(), sql, alias)
+	row := s.client.QueryRow(ctx, sql, alias)
 
 	var url shortener.URL
 
@@ -85,12 +85,12 @@ func (s *shortenerRepository) GetUrlByAlias(alias string) (*shortener.URL, error
 	return &url, nil
 }
 
-func (s *shortenerRepository) CreateAlias(model *shortener.URL) (string, error) {
+func (s *shortenerRepository) CreateAlias(ctx context.Context, model *shortener.URL) (string, error) {
 	sql := `INSERT INTO urls (alias_url, original_url, visits, count_use, duration, created_at)
 			VALUES ($1, $2, $3, $4, $5, $6)
 			RETURNING alias_url`
 
-	row := s.client.QueryRow(context.Background(), sql, model.AliasURL, model.OriginalURL, model.Options.Visits, model.Options.CountUse, model.Options.Duration, model.CreatedAt)
+	row := s.client.QueryRow(ctx, sql, model.AliasURL, model.OriginalURL, model.Options.Visits, model.Options.CountUse, model.Options.Duration, model.CreatedAt)
 
 	var alias string
 

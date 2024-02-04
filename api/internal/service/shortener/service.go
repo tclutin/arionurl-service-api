@@ -1,6 +1,7 @@
 package shortener
 
 import (
+	"context"
 	"errors"
 	"github.com/tclutin/ArionURL/internal/config"
 	"github.com/tclutin/ArionURL/pkg/utils"
@@ -11,10 +12,10 @@ import (
 )
 
 type Repository interface {
-	CreateAlias(model *URL) (string, error)
-	GetUrlByAlias(alias string) (*URL, error)
-	RemoveUrlByID(id uint64) error
-	UpdateShortUrl(model *URL) error
+	CreateAlias(ctx context.Context, model *URL) (string, error)
+	GetUrlByAlias(ctx context.Context, alias string) (*URL, error)
+	RemoveUrlByID(ctx context.Context, id uint64) error
+	UpdateShortUrl(ctx context.Context, model *URL) error
 }
 
 type service struct {
@@ -27,7 +28,7 @@ func NewService(logger *slog.Logger, cfg *config.Config, repo Repository) *servi
 	return &service{logger: logger, cfg: cfg, repo: repo}
 }
 
-func (s *service) CreateShortUrl(dto CreateUrlDTO) (string, error) {
+func (s *service) CreateShortUrl(ctx context.Context, dto CreateUrlDTO) (string, error) {
 	dto.Duration = strings.ReplaceAll(dto.Duration, "-", "")
 
 	if !s.validateOriginalURL(dto.OriginalURL) {
@@ -62,7 +63,7 @@ func (s *service) CreateShortUrl(dto CreateUrlDTO) (string, error) {
 		CreatedAt:   currentTime,
 	}
 
-	alias, err := s.repo.CreateAlias(url)
+	alias, err := s.repo.CreateAlias(ctx, url)
 	if err != nil {
 		return "", errors.New("alias creation error")
 	}
@@ -70,15 +71,15 @@ func (s *service) CreateShortUrl(dto CreateUrlDTO) (string, error) {
 	return alias, nil
 }
 
-func (s *service) LookShortUrl(alias string) (*URL, error) {
-	url, err := s.repo.GetUrlByAlias(alias)
+func (s *service) LookShortUrl(ctx context.Context, alias string) (*URL, error) {
+	url, err := s.repo.GetUrlByAlias(ctx, alias)
 	if err != nil {
 		return nil, errors.New("alias not found")
 	}
 
 	if url.Options.Duration.Before(time.Now()) {
 
-		err = s.repo.RemoveUrlByID(url.ID)
+		err = s.repo.RemoveUrlByID(ctx, url.ID)
 		if err != nil {
 			return nil, errors.New("deletion error")
 		}
@@ -89,7 +90,7 @@ func (s *service) LookShortUrl(alias string) (*URL, error) {
 	url.Options.Visits++
 
 	if url.Options.CountUse == 0 {
-		err = s.repo.RemoveUrlByID(url.ID)
+		err = s.repo.RemoveUrlByID(ctx, url.ID)
 		if err != nil {
 			return nil, errors.New("deletion error")
 		}
@@ -100,7 +101,7 @@ func (s *service) LookShortUrl(alias string) (*URL, error) {
 		url.Options.CountUse--
 	}
 
-	err = s.repo.UpdateShortUrl(url)
+	err = s.repo.UpdateShortUrl(ctx, url)
 	if err != nil {
 		return nil, errors.New("failed to update short url")
 	}

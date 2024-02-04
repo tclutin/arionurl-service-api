@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/tclutin/ArionURL/internal/config"
 	"github.com/tclutin/ArionURL/internal/service/shortener"
@@ -14,8 +15,8 @@ const (
 )
 
 type ShortenerService interface {
-	CreateShortUrl(dto shortener.CreateUrlDTO) (string, error)
-	LookShortUrl(alias string) (*shortener.URL, error)
+	CreateShortUrl(ctx context.Context, dto shortener.CreateUrlDTO) (string, error)
+	LookShortUrl(ctx context.Context, alias string) (*shortener.URL, error)
 }
 
 type handler struct {
@@ -40,7 +41,7 @@ func (h *handler) CreateAlias(c *gin.Context) {
 		return
 	}
 
-	shortUrl, err := h.service.CreateShortUrl(dto)
+	shortUrl, err := h.service.CreateShortUrl(context.Background(), dto)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -51,7 +52,7 @@ func (h *handler) CreateAlias(c *gin.Context) {
 
 func (h *handler) RedirectToAlias(c *gin.Context) {
 	alias := c.Param("alias")
-	url, err := h.service.LookShortUrl(alias)
+	url, err := h.service.LookShortUrl(context.Background(), alias)
 
 	if err != nil {
 		c.Redirect(http.StatusFound, h.cfg.BaseRedirect)
