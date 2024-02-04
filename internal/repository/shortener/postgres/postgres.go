@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/tclutin/ArionURL/internal/service/shortener"
 	"github.com/tclutin/ArionURL/pkg/client/postgresql"
-	"log"
 	"log/slog"
 	"strings"
 )
@@ -23,25 +22,6 @@ func NewShortenerRepository(logger *slog.Logger, client postgresql.Client) *shor
 	return &shortenerRepository{
 		logger: logger,
 		client: client,
-	}
-}
-
-func (s *shortenerRepository) InitDB() {
-	urls := `CREATE TABLE IF NOT EXISTS public.urls (
-    		id SERIAL PRIMARY KEY,
-    		user_id INTEGER,
-    		alias_url TEXT UNIQUE NOT NULL,
-    		original_url TEXT NOT NULL, 
-    		visits INTEGER NOT NULL DEFAULT 0,
-    		count_use INTEGER NOT NULL DEFAULT -1,
-    		duration TIMESTAMP NOT NULL,
-    	    created_at TIMESTAMP NOT NULL,
-    	    FOREIGN KEY (user_id) REFERENCES public.users(id)
-			)`
-
-	_, err := s.client.Exec(context.Background(), urls)
-	if err != nil {
-		log.Fatalln(err)
 	}
 }
 
