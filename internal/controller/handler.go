@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/tclutin/ArionURL/internal/config"
 	"github.com/tclutin/ArionURL/internal/controller/middleware"
@@ -46,12 +47,14 @@ func (h *handler) createAlias(c *gin.Context) {
 		return
 	}
 
-	shortUrl, err := h.service.CreateShortUrl(context.Background(), dto)
+	alias, err := h.service.CreateShortUrl(context.Background(), dto)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusCreated, gin.H{"alias": shortUrl})
+
+	fullUrl := fmt.Sprintf("%s/%s", h.cfg.Address, alias)
+	c.JSON(http.StatusCreated, gin.H{"alias": fullUrl})
 	return
 }
 
