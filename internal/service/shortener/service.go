@@ -15,7 +15,6 @@ const (
 	layer = "shortenerService."
 )
 
-//go:generate go run github.com/vektra/mockery/v2@v2.40.1 --name=Repository
 type Repository interface {
 	CreateAlias(ctx context.Context, model *URL) (string, error)
 	GetUrlByAlias(ctx context.Context, alias string) (*URL, error)
