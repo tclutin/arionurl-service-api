@@ -105,13 +105,14 @@ func (s *service) CreateEphemeralUrl(ctx context.Context, dto CreateEphemeralDTO
 		Options:     options,
 		CreatedAt:   currentTime,
 	}
-	s.repoMemory.Set(uuid.String(), url)
 
+	s.repoMemory.Set(uuid.String(), url)
 	fmt.Printf("%+v", s.repoMemory)
 	return uuid.String(), nil
 }
 
 func (s *service) LookShortUrl(ctx context.Context, alias string) (*URL, error) {
+	s.repoMemory.Get("alais")
 	url, err := s.repoDB.GetUrlByAlias(ctx, alias)
 	if err != nil {
 		return nil, errors.New("alias not found")
