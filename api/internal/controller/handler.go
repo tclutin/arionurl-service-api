@@ -10,12 +10,14 @@ import (
 )
 
 const (
-	createAliasURL  = "/aliases"
-	redirectToAlias = "/:alias"
+	createAliasURL          = "/aliases"
+	createEphemeralAliasURL = "/aliases/ephemeral"
+	redirectToAliasURL      = "/:alias"
 )
 
 type ShortenerService interface {
 	CreateShortUrl(ctx context.Context, dto shortener.CreateUrlDTO) (string, error)
+	CreateEphemeralUrl(ctx context.Context, dto shortener.CreateEphemeralDTO) (string, error)
 	LookShortUrl(ctx context.Context, alias string) (*shortener.URL, error)
 }
 
@@ -31,7 +33,8 @@ func NewHandler(logger *slog.Logger, cfg *config.Config, service ShortenerServic
 
 func (h *handler) Register(router *gin.Engine) {
 	router.POST(createAliasURL, h.CreateAlias)
-	router.GET(redirectToAlias, h.RedirectToAlias)
+	router.POST(createEphemeralAliasURL, h.CreateEphemeralAlias)
+	router.GET(redirectToAliasURL, h.RedirectToAlias)
 }
 
 func (h *handler) CreateAlias(c *gin.Context) {
@@ -47,6 +50,22 @@ func (h *handler) CreateAlias(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"alias": shortUrl})
+	return
+}
+
+func (h *handler) CreateEphemeralAlias(c *gin.Context) {
+	var dto shortener.CreateEphemeralDTO
+	if err := c.BindJSON(&dto); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	uuid, err := h.service.CreateEphemeralUrl(context.Background(), dto)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, gin.H{"uuid": uuid})
 	return
 }
 

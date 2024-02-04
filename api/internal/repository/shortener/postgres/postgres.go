@@ -1,4 +1,4 @@
-package repository
+package postgres
 
 import (
 	"context"
@@ -8,19 +8,19 @@ import (
 	"log/slog"
 )
 
-type shortenerRepository struct {
+type shortenerDBRepo struct {
 	client postgresql.Client
 	logger *slog.Logger
 }
 
-func NewShortenerRepo(logger *slog.Logger, client postgresql.Client) *shortenerRepository {
-	return &shortenerRepository{
+func NewShortenerDBRepo(logger *slog.Logger, client postgresql.Client) *shortenerDBRepo {
+	return &shortenerDBRepo{
 		logger: logger,
 		client: client,
 	}
 }
 
-func (s *shortenerRepository) InitDB() {
+func (s *shortenerDBRepo) InitDB() {
 	users := `CREATE TABLE IF NOT EXISTS public.users (
     		id SERIAL PRIMARY KEY,
     		username TEXT NOT NULL,
@@ -51,7 +51,7 @@ func (s *shortenerRepository) InitDB() {
 	}
 }
 
-func (s *shortenerRepository) UpdateShortUrl(ctx context.Context, entity *shortener.URL) error {
+func (s *shortenerDBRepo) UpdateShortUrl(ctx context.Context, entity *shortener.URL) error {
 	sql := `UPDATE urls SET visits = $1, count_use = $2 WHERE id =  $3`
 
 	_, err := s.client.Exec(ctx, sql, entity.Options.Visits, entity.Options.CountUse, entity.ID)
@@ -62,17 +62,18 @@ func (s *shortenerRepository) UpdateShortUrl(ctx context.Context, entity *shorte
 	return nil
 }
 
-func (s *shortenerRepository) RemoveUrlByID(ctx context.Context, id uint64) error {
+func (s *shortenerDBRepo) RemoveUrlByID(ctx context.Context, id uint64) error {
 	sql := `DELETE FROM urls WHERE id = $1`
 	_, err := s.client.Exec(ctx, sql, id)
 
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
-func (s *shortenerRepository) GetUrlByAlias(ctx context.Context, alias string) (*shortener.URL, error) {
+func (s *shortenerDBRepo) GetUrlByAlias(ctx context.Context, alias string) (*shortener.URL, error) {
 	sql := `SELECT * FROM urls WHERE alias_url = $1`
 
 	row := s.client.QueryRow(ctx, sql, alias)
@@ -82,10 +83,11 @@ func (s *shortenerRepository) GetUrlByAlias(ctx context.Context, alias string) (
 	if err := row.Scan(&url.ID, &url.UserID, &url.AliasURL, &url.OriginalURL, &url.Options.Visits, &url.Options.CountUse, &url.Options.Duration, &url.CreatedAt); err != nil {
 		return nil, err
 	}
+
 	return &url, nil
 }
 
-func (s *shortenerRepository) CreateAlias(ctx context.Context, model *shortener.URL) (string, error) {
+func (s *shortenerDBRepo) CreateAlias(ctx context.Context, model *shortener.URL) (string, error) {
 	sql := `INSERT INTO urls (alias_url, original_url, visits, count_use, duration, created_at)
 			VALUES ($1, $2, $3, $4, $5, $6)
 			RETURNING alias_url`
@@ -97,5 +99,6 @@ func (s *shortenerRepository) CreateAlias(ctx context.Context, model *shortener.
 	if err := row.Scan(&alias); err != nil {
 		log.Fatalln(err)
 	}
+
 	return alias, nil
 }

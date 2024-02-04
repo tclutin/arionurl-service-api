@@ -3,6 +3,8 @@ package shortener
 import (
 	"context"
 	"errors"
+	"fmt"
+	"github.com/google/uuid"
 	"github.com/tclutin/ArionURL/internal/config"
 	"github.com/tclutin/ArionURL/pkg/utils"
 	"log/slog"
@@ -11,21 +13,28 @@ import (
 	"time"
 )
 
-type Repository interface {
+type DBRepository interface {
 	CreateAlias(ctx context.Context, model *URL) (string, error)
 	GetUrlByAlias(ctx context.Context, alias string) (*URL, error)
 	RemoveUrlByID(ctx context.Context, id uint64) error
 	UpdateShortUrl(ctx context.Context, model *URL) error
 }
 
-type service struct {
-	logger *slog.Logger
-	cfg    *config.Config
-	repo   Repository
+type MemoryRepository interface {
+	Set(key string, model *URL)
+	Get(key string) (*URL, error)
+	Delete(key string) error
 }
 
-func NewService(logger *slog.Logger, cfg *config.Config, repo Repository) *service {
-	return &service{logger: logger, cfg: cfg, repo: repo}
+type service struct {
+	logger     *slog.Logger
+	cfg        *config.Config
+	repoDB     DBRepository
+	repoMemory MemoryRepository
+}
+
+func NewService(logger *slog.Logger, cfg *config.Config, repoDB DBRepository, repoMemory MemoryRepository) *service {
+	return &service{logger: logger, cfg: cfg, repoDB: repoDB, repoMemory: repoMemory}
 }
 
 func (s *service) CreateShortUrl(ctx context.Context, dto CreateUrlDTO) (string, error) {
@@ -63,7 +72,7 @@ func (s *service) CreateShortUrl(ctx context.Context, dto CreateUrlDTO) (string,
 		CreatedAt:   currentTime,
 	}
 
-	alias, err := s.repo.CreateAlias(ctx, url)
+	alias, err := s.repoDB.CreateAlias(ctx, url)
 	if err != nil {
 		return "", errors.New("alias creation error")
 	}
@@ -71,15 +80,46 @@ func (s *service) CreateShortUrl(ctx context.Context, dto CreateUrlDTO) (string,
 	return alias, nil
 }
 
+func (s *service) CreateEphemeralUrl(ctx context.Context, dto CreateEphemeralDTO) (string, error) {
+	if !s.validateOriginalURL(dto.OriginalURL) {
+		return "", errors.New("invalid format of the original url")
+	}
+
+	if dto.CountUse <= 0 {
+		dto.CountUse = -1
+	}
+
+	//TODO FROM config
+	currentTime := time.Now().UTC()
+	expirationTime := currentTime.Add(1 * time.Hour)
+
+	options := URLOptions{
+		CountUse: dto.CountUse,
+		Duration: expirationTime,
+	}
+
+	uuid := uuid.New()
+	url := &URL{
+		AliasURL:    s.generateAlias(s.cfg.SizeShortUrl),
+		OriginalURL: dto.OriginalURL,
+		Options:     options,
+		CreatedAt:   currentTime,
+	}
+	s.repoMemory.Set(uuid.String(), url)
+
+	fmt.Printf("%+v", s.repoMemory)
+	return uuid.String(), nil
+}
+
 func (s *service) LookShortUrl(ctx context.Context, alias string) (*URL, error) {
-	url, err := s.repo.GetUrlByAlias(ctx, alias)
+	url, err := s.repoDB.GetUrlByAlias(ctx, alias)
 	if err != nil {
 		return nil, errors.New("alias not found")
 	}
 
 	if url.Options.Duration.Before(time.Now()) {
 
-		err = s.repo.RemoveUrlByID(ctx, url.ID)
+		err = s.repoDB.RemoveUrlByID(ctx, url.ID)
 		if err != nil {
 			return nil, errors.New("deletion error")
 		}
@@ -90,7 +130,7 @@ func (s *service) LookShortUrl(ctx context.Context, alias string) (*URL, error) 
 	url.Options.Visits++
 
 	if url.Options.CountUse == 0 {
-		err = s.repo.RemoveUrlByID(ctx, url.ID)
+		err = s.repoDB.RemoveUrlByID(ctx, url.ID)
 		if err != nil {
 			return nil, errors.New("deletion error")
 		}
@@ -101,7 +141,7 @@ func (s *service) LookShortUrl(ctx context.Context, alias string) (*URL, error) 
 		url.Options.CountUse--
 	}
 
-	err = s.repo.UpdateShortUrl(ctx, url)
+	err = s.repoDB.UpdateShortUrl(ctx, url)
 	if err != nil {
 		return nil, errors.New("failed to update short url")
 	}

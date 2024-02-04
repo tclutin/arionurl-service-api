@@ -6,7 +6,8 @@ import (
 	"github.com/tclutin/ArionURL/internal/app"
 	"github.com/tclutin/ArionURL/internal/config"
 	"github.com/tclutin/ArionURL/internal/controller"
-	"github.com/tclutin/ArionURL/internal/repository"
+	"github.com/tclutin/ArionURL/internal/repository/shortener/inmemory"
+	"github.com/tclutin/ArionURL/internal/repository/shortener/postgres"
 	"github.com/tclutin/ArionURL/internal/service/shortener"
 	"github.com/tclutin/ArionURL/pkg/client/postgresql"
 	"github.com/tclutin/ArionURL/pkg/logging"
@@ -21,16 +22,17 @@ func main() {
 	logger := logging.InitSlog(cfg.Env)
 
 	//Initializing the pgxpool
-	pgxPool := postgresql.NewClient(context.TODO(), os.Getenv("ARIONURL_DB"))
+	client := postgresql.NewClient(context.TODO(), os.Getenv("ARIONURL_DB"))
 
 	//Initializing the router
 	router := gin.Default()
 
 	//Initializing the shortener service
-	shortenerRepo := repository.NewShortenerRepo(logger, pgxPool)
-	shortenerRepo.InitDB()
+	shortenerDBRepo := postgres.NewShortenerDBRepo(logger, client)
+	shortenerMemoryRepo := inmemory.NewShortenerMemoryRepo()
+	shortenerDBRepo.InitDB()
 
-	shortenerService := shortener.NewService(logger, cfg, shortenerRepo)
+	shortenerService := shortener.NewService(logger, cfg, shortenerDBRepo, shortenerMemoryRepo)
 	shortenerHandler := controller.NewHandler(logger, cfg, shortenerService)
 
 	shortenerHandler.Register(router)
