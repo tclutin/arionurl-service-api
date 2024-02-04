@@ -6,7 +6,7 @@ import (
 	"github.com/tclutin/ArionURL/internal/app"
 	"github.com/tclutin/ArionURL/internal/config"
 	"github.com/tclutin/ArionURL/internal/controller"
-	"github.com/tclutin/ArionURL/internal/repository/postgres"
+	"github.com/tclutin/ArionURL/internal/repository"
 	"github.com/tclutin/ArionURL/internal/service/shortener"
 	"github.com/tclutin/ArionURL/pkg/client/postgresql"
 	"github.com/tclutin/ArionURL/pkg/logging"
@@ -27,7 +27,7 @@ func main() {
 	router := gin.Default()
 
 	//Initializing the shortener service
-	shortenerRepo := postgres.NewShortenerRepo(logger, pgxPool)
+	shortenerRepo := repository.NewShortenerRepo(logger, pgxPool)
 	shortenerRepo.InitDB()
 
 	shortenerService := shortener.NewService(logger, cfg, shortenerRepo)
