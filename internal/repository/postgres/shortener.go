@@ -25,12 +25,12 @@ func NewShortenerRepository(logger *slog.Logger, client postgresql.Client) *shor
 	}
 }
 
-func (s *shortenerRepository) UpdateShortUrl(ctx context.Context, entity *model.URL) error {
+func (s *shortenerRepository) UpdateShortUrl(ctx context.Context, model *model.URL) error {
 	sql := `UPDATE urls SET count_use = $1 WHERE id =  $2`
 
 	s.logger.Info(layer+"updateShortUrl", slog.String("sql", sql))
 
-	_, err := s.client.Exec(ctx, sql, entity.Options.CountUse, entity.ID)
+	_, err := s.client.Exec(ctx, sql, model.Options.CountUse, model.ID)
 
 	if err != nil {
 		s.logger.Error(layer+"updateShortUrl", slog.Any("error", err))
