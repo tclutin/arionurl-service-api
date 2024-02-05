@@ -6,7 +6,7 @@ import (
 	"github.com/tclutin/ArionURL/internal/app"
 	"github.com/tclutin/ArionURL/internal/config"
 	"github.com/tclutin/ArionURL/internal/controller"
-	"github.com/tclutin/ArionURL/internal/repository/shortener/postgres"
+	"github.com/tclutin/ArionURL/internal/repository/postgres"
 	"github.com/tclutin/ArionURL/internal/service/shortener"
 	"github.com/tclutin/ArionURL/pkg/client/postgresql"
 	"github.com/tclutin/ArionURL/pkg/logging"
