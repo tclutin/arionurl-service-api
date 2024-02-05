@@ -2,7 +2,13 @@ package app
 
 import (
 	"context"
+	"github.com/gin-gonic/gin"
 	"github.com/tclutin/ArionURL/internal/config"
+	"github.com/tclutin/ArionURL/internal/controller"
+	"github.com/tclutin/ArionURL/internal/repository/postgres"
+	"github.com/tclutin/ArionURL/internal/service"
+	"github.com/tclutin/ArionURL/pkg/client/postgresql"
+	"github.com/tclutin/ArionURL/pkg/logging"
 	"log/slog"
 	"net/http"
 	"os"
@@ -14,10 +20,30 @@ type app struct {
 	cfg        *config.Config
 	logger     *slog.Logger
 	httpServer *http.Server
-	router     http.Handler
+	router     *gin.Engine
 }
 
-func New(cfg *config.Config, logger *slog.Logger, router http.Handler) *app {
+func New() *app {
+	//Init the cfg
+	cfg := config.MustLoad()
+
+	//Init the logger
+	logger := logging.InitSlog(cfg.Env)
+
+	//Init the client
+	client := postgresql.NewClient(context.Background(), os.Getenv("ARIONURL_DB"))
+
+	//Init the router
+	router := gin.Default()
+
+	//Init the shortener layer
+	shortenerDBRepo := postgres.NewShortenerRepository(logger, client)
+	shortenerService := service.NewShortenerService(logger, cfg, shortenerDBRepo)
+	shortenerHandler := controller.NewShortenerHandler(logger, cfg, shortenerService)
+
+	//Register shortener routes
+	shortenerHandler.Register(router)
+
 	return &app{
 		cfg:    cfg,
 		logger: logger,

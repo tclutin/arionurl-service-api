@@ -1,4 +1,4 @@
-package shortener
+package model
 
 import (
 	"time"
@@ -13,7 +13,6 @@ type URL struct {
 }
 
 type URLOptions struct {
-	Visits   uint      `json:"visits"`
 	CountUse int       `json:"count_use"`
 	Duration time.Time `json:"duration"`
 }

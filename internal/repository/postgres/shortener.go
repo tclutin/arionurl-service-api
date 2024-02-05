@@ -2,7 +2,7 @@ package postgres
 
 import (
 	"context"
-	"github.com/tclutin/ArionURL/internal/service/shortener"
+	"github.com/tclutin/ArionURL/internal/model"
 	"github.com/tclutin/ArionURL/pkg/client/postgresql"
 	"log/slog"
 	"strings"
@@ -25,17 +25,18 @@ func NewShortenerRepository(logger *slog.Logger, client postgresql.Client) *shor
 	}
 }
 
-func (s *shortenerRepository) UpdateShortUrl(ctx context.Context, entity *shortener.URL) error {
-	sql := `UPDATE urls SET visits = $1, count_use = $2 WHERE id =  $3`
+func (s *shortenerRepository) UpdateShortUrl(ctx context.Context, entity *model.URL) error {
+	sql := `UPDATE urls SET count_use = $1 WHERE id =  $2`
 
 	s.logger.Info(layer+"updateShortUrl", slog.String("sql", sql))
 
-	_, err := s.client.Exec(ctx, sql, entity.Options.Visits, entity.Options.CountUse, entity.ID)
+	_, err := s.client.Exec(ctx, sql, entity.Options.CountUse, entity.ID)
 
 	if err != nil {
 		s.logger.Error(layer+"updateShortUrl", slog.Any("error", err))
 		return err
 	}
+
 	return nil
 }
 
@@ -54,16 +55,16 @@ func (s *shortenerRepository) RemoveUrlByID(ctx context.Context, id uint64) erro
 	return nil
 }
 
-func (s *shortenerRepository) GetUrlByAlias(ctx context.Context, alias string) (*shortener.URL, error) {
+func (s *shortenerRepository) GetUrlByAlias(ctx context.Context, alias string) (*model.URL, error) {
 	sql := `SELECT * FROM urls WHERE alias_url = $1`
 
 	s.logger.Info(layer+"GetUrlByAlias", slog.String("sql", sql))
 
 	row := s.client.QueryRow(ctx, sql, alias)
 
-	var url shortener.URL
+	var url model.URL
 
-	if err := row.Scan(&url.ID, &url.AliasURL, &url.OriginalURL, &url.Options.Visits, &url.Options.CountUse, &url.Options.Duration, &url.CreatedAt); err != nil {
+	if err := row.Scan(&url.ID, &url.AliasURL, &url.OriginalURL, &url.Options.CountUse, &url.Options.Duration, &url.CreatedAt); err != nil {
 		s.logger.Info(layer+"GetUrlByAlias", slog.Any("error", err))
 		return nil, err
 	}
@@ -71,14 +72,14 @@ func (s *shortenerRepository) GetUrlByAlias(ctx context.Context, alias string) (
 	return &url, nil
 }
 
-func (s *shortenerRepository) CreateAlias(ctx context.Context, model *shortener.URL) (string, error) {
-	sql := `INSERT INTO urls (alias_url, original_url, visits, count_use, duration, created_at)
-			VALUES ($1, $2, $3, $4, $5, $6)
+func (s *shortenerRepository) CreateAlias(ctx context.Context, model *model.URL) (string, error) {
+	sql := `INSERT INTO urls (alias_url, original_url, count_use, duration, created_at)
+			VALUES ($1, $2, $3, $4, $5)
 			RETURNING alias_url`
 
 	s.logger.Info(layer+"CreateAlias", slog.String("sql", strings.Replace(sql, "\t", "", -1)))
 
-	row := s.client.QueryRow(ctx, sql, model.AliasURL, model.OriginalURL, model.Options.Visits, model.Options.CountUse, model.Options.Duration, model.CreatedAt)
+	row := s.client.QueryRow(ctx, sql, model.AliasURL, model.OriginalURL, model.Options.CountUse, model.Options.Duration, model.CreatedAt)
 
 	var alias string
 

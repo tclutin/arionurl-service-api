@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/tclutin/ArionURL/internal/config"
+	"github.com/tclutin/ArionURL/internal/controller/dto"
 	"github.com/tclutin/ArionURL/internal/controller/middleware"
-	"github.com/tclutin/ArionURL/internal/service/shortener"
+	"github.com/tclutin/ArionURL/internal/model"
 	"log/slog"
 	"net/http"
 )
@@ -17,31 +18,31 @@ const (
 	redirectToAliasURL = "/:alias"
 )
 
-type ShortenerService interface {
-	CreateShortUrl(ctx context.Context, dto shortener.CreateUrlDTO) (string, error)
-	LookShortUrl(ctx context.Context, alias string) (*shortener.URL, error)
+type shortenerService interface {
+	CreateShortUrl(ctx context.Context, dto dto.CreateUrlRequest) (string, error)
+	LookShortUrl(ctx context.Context, alias string) (*model.URL, error)
 }
 
-type handler struct {
+type shortenerHandler struct {
 	cfg     *config.Config
 	logger  *slog.Logger
-	service ShortenerService
+	service shortenerService
 }
 
-func NewHandler(logger *slog.Logger, cfg *config.Config, service ShortenerService) *handler {
+func NewShortenerHandler(logger *slog.Logger, cfg *config.Config, service shortenerService) *shortenerHandler {
 	logger.Info(layer + "init")
-	return &handler{logger: logger, cfg: cfg, service: service}
+	return &shortenerHandler{logger: logger, cfg: cfg, service: service}
 }
 
-func (h *handler) Register(router *gin.Engine) {
+func (h *shortenerHandler) Register(router *gin.Engine) {
 	router.Use(middleware.RateLimiter())
-	router.POST(createAliasURL, h.createAlias)
-	router.GET(redirectToAliasURL, h.redirectToAlias)
+	router.POST(createAliasURL, h.CreateAlias)
+	router.GET(redirectToAliasURL, h.RedirectToAlias)
 }
 
-func (h *handler) createAlias(c *gin.Context) {
+func (h *shortenerHandler) CreateAlias(c *gin.Context) {
 	h.logger.Info(layer + "CreateAlias")
-	var dto shortener.CreateUrlDTO
+	var dto dto.CreateUrlRequest
 	if err := c.BindJSON(&dto); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -54,19 +55,20 @@ func (h *handler) createAlias(c *gin.Context) {
 	}
 
 	fullUrl := fmt.Sprintf("http://%s/%s", h.cfg.Address, alias)
-	c.JSON(http.StatusCreated, gin.H{"url": fullUrl})
+	c.JSON(http.StatusCreated, gin.H{"alias": fullUrl})
 	return
 }
 
-func (h *handler) redirectToAlias(c *gin.Context) {
+func (h *shortenerHandler) RedirectToAlias(c *gin.Context) {
 	h.logger.Info(layer + "RedirectToAlias")
 	alias := c.Param("alias")
-	url, err := h.service.LookShortUrl(context.Background(), alias)
 
+	url, err := h.service.LookShortUrl(context.Background(), alias)
 	if err != nil {
 		c.Redirect(http.StatusFound, h.cfg.BaseRedirect)
 		return
 	}
+
 	c.Redirect(http.StatusFound, url.OriginalURL)
 	return
 }

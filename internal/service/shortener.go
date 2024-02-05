@@ -1,9 +1,11 @@
-package shortener
+package service
 
 import (
 	"context"
 	"errors"
 	"github.com/tclutin/ArionURL/internal/config"
+	"github.com/tclutin/ArionURL/internal/controller/dto"
+	"github.com/tclutin/ArionURL/internal/model"
 	"github.com/tclutin/ArionURL/pkg/utils"
 	"log/slog"
 	"net/url"
@@ -15,25 +17,25 @@ const (
 	layer = "shortenerService."
 )
 
-type Repository interface {
-	CreateAlias(ctx context.Context, model *URL) (string, error)
-	GetUrlByAlias(ctx context.Context, alias string) (*URL, error)
+type shortenerRepository interface {
+	CreateAlias(ctx context.Context, model *model.URL) (string, error)
+	GetUrlByAlias(ctx context.Context, alias string) (*model.URL, error)
 	RemoveUrlByID(ctx context.Context, id uint64) error
-	UpdateShortUrl(ctx context.Context, model *URL) error
+	UpdateShortUrl(ctx context.Context, model *model.URL) error
 }
 
-type service struct {
+type shortenerService struct {
 	logger *slog.Logger
 	cfg    *config.Config
-	repo   Repository
+	repo   shortenerRepository
 }
 
-func NewService(logger *slog.Logger, cfg *config.Config, repo Repository) *service {
+func NewShortenerService(logger *slog.Logger, cfg *config.Config, repo shortenerRepository) *shortenerService {
 	logger.Info(layer + "init")
-	return &service{logger: logger, cfg: cfg, repo: repo}
+	return &shortenerService{logger: logger, cfg: cfg, repo: repo}
 }
 
-func (s *service) LookShortUrl(ctx context.Context, alias string) (*URL, error) {
+func (s *shortenerService) LookShortUrl(ctx context.Context, alias string) (*model.URL, error) {
 	s.logger.Info(layer + "LookShortUrl")
 	url, err := s.repo.GetUrlByAlias(ctx, alias)
 	if err != nil {
@@ -49,8 +51,6 @@ func (s *service) LookShortUrl(ctx context.Context, alias string) (*URL, error) 
 
 		return nil, errors.New("url expired")
 	}
-
-	url.Options.Visits++
 
 	if url.Options.CountUse == 0 {
 
@@ -73,7 +73,7 @@ func (s *service) LookShortUrl(ctx context.Context, alias string) (*URL, error) 
 	return url, nil
 }
 
-func (s *service) CreateShortUrl(ctx context.Context, dto CreateUrlDTO) (string, error) {
+func (s *shortenerService) CreateShortUrl(ctx context.Context, dto dto.CreateUrlRequest) (string, error) {
 	s.logger.Info(layer + "CreateShortUrl")
 	dto.Duration = strings.ReplaceAll(dto.Duration, "-", "")
 
@@ -97,12 +97,12 @@ func (s *service) CreateShortUrl(ctx context.Context, dto CreateUrlDTO) (string,
 	currentTime := time.Now().UTC()
 	expirationTime := currentTime.Add(duration)
 
-	options := URLOptions{
+	options := model.URLOptions{
 		Duration: expirationTime,
 		CountUse: dto.CountUse,
 	}
 
-	url := &URL{
+	url := &model.URL{
 		AliasURL:    s.generateAlias(s.cfg.SizeShortUrl),
 		OriginalURL: dto.OriginalURL,
 		Options:     options,
@@ -117,7 +117,7 @@ func (s *service) CreateShortUrl(ctx context.Context, dto CreateUrlDTO) (string,
 	return alias, nil
 }
 
-func (s *service) validateDuration(duration time.Duration) bool {
+func (s *shortenerService) validateDuration(duration time.Duration) bool {
 	s.logger.Info(layer + "validateDuration")
 	maxDuration := 720 * time.Hour
 	if duration < maxDuration {
@@ -126,7 +126,7 @@ func (s *service) validateDuration(duration time.Duration) bool {
 	return false
 }
 
-func (s *service) validateOriginalURL(originalURL string) bool {
+func (s *shortenerService) validateOriginalURL(originalURL string) bool {
 	s.logger.Info(layer + "validateOriginalURL")
 	_, err := url.ParseRequestURI(originalURL)
 	if err != nil {
@@ -135,7 +135,7 @@ func (s *service) validateOriginalURL(originalURL string) bool {
 	return true
 }
 
-func (s *service) generateAlias(size int64) string {
+func (s *shortenerService) generateAlias(size int64) string {
 	s.logger.Info(layer + "generateAlias")
 	chars := []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
 	alias := make([]rune, size)
