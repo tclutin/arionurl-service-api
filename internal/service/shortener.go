@@ -3,10 +3,10 @@ package service
 import (
 	"context"
 	"errors"
-	"github.com/tclutin/ArionURL/internal/config"
-	"github.com/tclutin/ArionURL/internal/controller/dto"
-	"github.com/tclutin/ArionURL/internal/model"
 	"github.com/tclutin/ArionURL/pkg/utils"
+	"github.com/tclutin/arionurl-service-api/internal/config"
+	"github.com/tclutin/arionurl-service-api/internal/controller/dto"
+	"github.com/tclutin/arionurl-service-api/internal/model"
 	"log/slog"
 	"net/url"
 	"strings"

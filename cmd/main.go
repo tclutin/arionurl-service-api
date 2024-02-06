@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/tclutin/ArionURL/internal/app"
+	"github.com/tclutin/arionurl-service-api/internal/app"
 )
 
 func main() {

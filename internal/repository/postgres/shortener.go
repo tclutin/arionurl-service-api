@@ -2,8 +2,8 @@ package postgres
 
 import (
 	"context"
-	"github.com/tclutin/ArionURL/internal/model"
 	"github.com/tclutin/ArionURL/pkg/client/postgresql"
+	"github.com/tclutin/arionurl-service-api/internal/model"
 	"log/slog"
 	"strings"
 )
