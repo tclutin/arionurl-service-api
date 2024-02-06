@@ -11,6 +11,5 @@ ENV ARIONURL_DB="postgresql://admin:root@localhost:5432/arion"
 
 RUN go build -o ./ cmd/main.go
 
-EXPOSE 2020
 
 CMD ["./main"]
