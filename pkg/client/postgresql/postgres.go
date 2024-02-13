@@ -20,6 +20,7 @@ type Client interface {
 
 func NewClient(ctx context.Context, connString string) *pgxpool.Pool {
 	pool, err := pgxpool.New(ctx, connString)
+
 	if err != nil {
 		slog.Error(fmt.Sprintf("%v", err))
 		os.Exit(1)
